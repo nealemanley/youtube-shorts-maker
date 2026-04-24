@@ -1,0 +1,12 @@
+#!/bin/bash
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+HTML_FILE="$SCRIPT_DIR/../../../index.html"
+if [ ! -f "$HTML_FILE" ]; then
+    PARENT="$( cd "$SCRIPT_DIR/../../.." && pwd )"
+    HTML_FILE="$PARENT/../index.html"
+fi
+if [ ! -f "$HTML_FILE" ]; then
+    osascript -e 'display alert "Shorts Maker" message "Could not find index.html — make sure it is in the same folder as this app." as warning'
+    exit 1
+fi
+open "$HTML_FILE"

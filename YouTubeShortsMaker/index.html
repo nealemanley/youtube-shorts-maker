@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shorts Maker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lato:wght@300;400;700&display=swap');
+
+  :root {
+    --cream: #F5F0E8;
+    --cream-dark: #EDE7D9;
+    --cream-mid: #E8E0CE;
+    --brown: #3B2A1A;
+    --brown-mid: #6B4C30;
+    --brown-light: #9C7A55;
+    --brown-muted: #B8956A;
+    --accent: #8B5E3C;
+    --border: #C9B89A;
+    --shadow: rgba(59, 42, 26, 0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--cream);
+    color: var(--brown);
+    font-family: 'Lato', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  header {
+    width: 100%;
+    padding: 28px 40px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    background: var(--cream);
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--brown);
+  }
+
+  header span {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--brown-light);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 900px;
+    padding: 32px 24px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .card {
+    background: var(--cream-dark);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px 28px;
+  }
+
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--brown-muted);
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  .source-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .source-row input[type="text"] {
+    flex: 1;
+    min-width: 220px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    background: var(--cream);
+    color: var(--brown);
+    font-family: 'Lato', sans-serif;
+    font-size: 14px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .source-row input[type="text"]:focus { border-color: var(--brown-mid); }
+  .source-row input[type="text"]::placeholder { color: var(--brown-muted); opacity: 0.6; }
+
+  .divider-text {
+    font-size: 11px;
+    color: var(--brown-muted);
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: 4px;
+    border: 1px solid var(--brown-mid);
+    background: transparent;
+    color: var(--brown);
+    font-family: 'Lato', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.18s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: var(--brown-mid); color: var(--cream); border-color: var(--brown-mid); }
+  .btn-primary { background: var(--brown); color: var(--cream); border-color: var(--brown); }
+  .btn-primary:hover { background: var(--brown-mid); border-color: var(--brown-mid); }
+  .btn-sm { padding: 7px 14px; font-size: 12px; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn:disabled:hover { background: transparent; color: var(--brown); border-color: var(--brown-mid); }
+  .btn-primary:disabled:hover { background: var(--brown); color: var(--cream); }
+
+  /* ── Video Player ── */
+  .video-wrap { display: none; flex-direction: column; gap: 16px; }
+  .video-wrap.visible { display: flex; }
+
+  video {
+    width: 100%;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #1a1008;
+    display: block;
+    max-height: 420px;
+    object-fit: contain;
+  }
+
+  /* ── Timeline / Trim ── */
+  .trim-card { display: none; }
+  .trim-card.visible { display: block; }
+
+  .time-inputs {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+
+  .time-field { display: flex; flex-direction: column; gap: 6px; }
+
+  .time-field label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--brown-muted);
+    font-weight: 700;
+  }
+
+  .time-field input[type="number"] {
+    width: 90px;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    background: var(--cream);
+    color: var(--brown);
+    font-family: 'Lato', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .time-field input[type="number"]:focus { border-color: var(--brown-mid); }
+  .time-hint { font-size: 11px; color: var(--brown-muted); margin-top: 2px; }
+
+  .timeline-wrap { margin-bottom: 18px; }
+
+  .timeline-track {
+    position: relative;
+    height: 48px;
+    background: var(--cream-mid);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    overflow: hidden;
+  }
+
+  .timeline-fill {
+    position: absolute;
+    top: 0; bottom: 0;
+    background: rgba(107, 76, 48, 0.2);
+    border-left: 2px solid var(--brown-mid);
+    border-right: 2px solid var(--brown-mid);
+    pointer-events: none;
+  }
+
+  .timeline-playhead {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent);
+    pointer-events: none;
+  }
+
+  .timeline-label { font-size: 10px; color: var(--brown-muted); margin-top: 5px; letter-spacing: 0.5px; }
+
+  .duration-warning {
+    font-size: 12px;
+    color: #a04020;
+    background: rgba(160, 64, 32, 0.08);
+    border: 1px solid rgba(160, 64, 32, 0.2);
+    border-radius: 4px;
+    padding: 6px 12px;
+    margin-top: 10px;
+    display: none;
+  }
+  .duration-warning.show { display: block; }
+
+  .trim-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .trim-info { font-size: 12px; color: var(--brown-light); margin-left: auto; }
+
+  /* ── Cover Image Card ── */
+  .cover-card { display: none; }
+  .cover-card.visible { display: block; }
+
+  .cover-inner {
+    display: flex;
+    gap: 28px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  /* Drop zone */
+  .cover-dropzone {
+    width: 108px;
+    height: 192px;   /* exactly 9:16 */
+    flex-shrink: 0;
+    border: 2px dashed var(--border);
+    border-radius: 6px;
+    background: var(--cream-mid);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .cover-dropzone:hover { border-color: var(--brown-mid); background: var(--cream); }
+  .cover-dropzone.has-image { border-style: solid; border-color: var(--brown-mid); }
+  .cover-dropzone.drag-over { border-color: var(--brown); background: var(--cream); }
+
+  .cover-dropzone img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+
+  .cover-dropzone-label {
+    font-size: 10px;
+    color: var(--brown-muted);
+    text-align: center;
+    line-height: 1.6;
+    letter-spacing: 0.3px;
+    padding: 8px;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .cover-dropzone-icon {
+    font-size: 26px;
+    opacity: 0.35;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .cover-controls {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .cover-desc {
+    font-size: 13px;
+    color: var(--brown-mid);
+    line-height: 1.65;
+  }
+  .cover-desc strong { color: var(--brown); font-weight: 700; }
+
+  .field-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--brown-muted);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  /* Position grid */
+  .position-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    max-width: 210px;
+  }
+
+  .pos-btn {
+    padding: 6px 4px;
+    font-size: 10px;
+    letter-spacing: 0.3px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--cream);
+    color: var(--brown-light);
+    cursor: pointer;
+    font-family: 'Lato', sans-serif;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .pos-btn:hover { border-color: var(--brown-mid); color: var(--brown); }
+  .pos-btn.active { background: var(--brown); color: var(--cream); border-color: var(--brown); }
+
+  /* Duration slider */
+  .range-row { display: flex; flex-direction: column; gap: 8px; max-width: 240px; }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--cream-mid);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    border: 1px solid var(--border);
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--brown-mid);
+    cursor: pointer;
+    border: 2px solid var(--cream);
+    box-shadow: 0 1px 4px var(--shadow);
+  }
+
+  .cover-remove {
+    font-size: 11px;
+    color: var(--brown-muted);
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: 'Lato', sans-serif;
+    padding: 0;
+    text-align: left;
+  }
+  .cover-remove:hover { color: #a04020; }
+
+  /* ── Progress ── */
+  .progress-wrap { display: none; flex-direction: column; gap: 8px; padding: 16px 0; }
+  .progress-wrap.visible { display: flex; }
+
+  .progress-bar-bg {
+    height: 4px;
+    background: var(--cream-mid);
+    border-radius: 2px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--brown-mid);
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  .progress-text { font-size: 12px; color: var(--brown-light); letter-spacing: 0.5px; }
+
+  /* ── Preview Section ── */
+  .preview-section { display: none; }
+  .preview-section.visible { display: block; }
+
+  .preview-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+  /* ── Status ── */
+  .status { font-size: 12px; color: var(--brown-light); letter-spacing: 0.5px; min-height: 18px; }
+  .status.error { color: #a04020; }
+
+  .yt-note {
+    font-size: 11px;
+    color: var(--brown-muted);
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(185, 148, 106, 0.1);
+    border-left: 2px solid var(--brown-muted);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .set-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+    border-radius: 3px;
+    border: 1px dashed var(--border);
+    background: transparent;
+    color: var(--brown-light);
+    cursor: pointer;
+    font-family: 'Lato', sans-serif;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .set-btn:hover { border-color: var(--brown-mid); color: var(--brown); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Shorts Maker</h1>
+  <span>60-second clip tool</span>
+</header>
+
+<div class="container">
+
+  <!-- SOURCE -->
+  <div class="card">
+    <div class="card-label">Source Video</div>
+    <div class="source-row">
+      <input type="text" id="urlInput" placeholder="Paste a YouTube or direct video URL…" />
+      <button class="btn btn-primary" onclick="loadFromURL()">Load URL</button>
+      <span class="divider-text">— or —</span>
+      <button class="btn" onclick="document.getElementById('fileInput').click()">Browse File</button>
+      <input type="file" id="fileInput" accept="video/*" style="display:none" onchange="loadLocalFile(event)">
+    </div>
+    <div class="yt-note">
+      ⓘ YouTube URLs require yt-dlp to be installed. Local video files (MP4, WebM, MOV) work instantly without any extra tools.
+    </div>
+    <div class="status" id="sourceStatus"></div>
+  </div>
+
+  <!-- PLAYER -->
+  <div class="card video-wrap" id="playerCard">
+    <div class="card-label">Preview</div>
+    <video id="mainVideo" controls preload="metadata"></video>
+  </div>
+
+  <!-- TRIM -->
+  <div class="card trim-card" id="trimCard">
+    <div class="card-label">Select Clip (max 60 seconds)</div>
+
+    <div class="timeline-wrap">
+      <div class="timeline-track" id="timelineTrack">
+        <div class="timeline-fill" id="timelineFill"></div>
+        <div class="timeline-playhead" id="timelinePlayhead"></div>
+      </div>
+      <div class="timeline-label">Click &amp; drag the handles on the timeline — or type in the boxes below</div>
+    </div>
+
+    <div class="time-inputs">
+      <div class="time-field">
+        <label>Start (seconds)</label>
+        <input type="number" id="startTime" value="0" min="0" step="0.1" oninput="onTimeInput()">
+        <button class="set-btn" onclick="setCurrentAsStart()">Set to current position</button>
+      </div>
+      <div class="time-field">
+        <label>End (seconds)</label>
+        <input type="number" id="endTime" value="60" min="0" step="0.1" oninput="onTimeInput()">
+        <button class="set-btn" onclick="setCurrentAsEnd()">Set to current position</button>
+      </div>
+      <div class="time-hint" style="align-self:center; padding-bottom:22px;">
+        Duration: <strong id="clipDuration">60.0s</strong>
+      </div>
+    </div>
+
+    <div class="duration-warning" id="durationWarning">
+      ⚠ Clip exceeds 60 seconds — please adjust start or end time.
+    </div>
+
+    <div class="trim-actions">
+      <button class="btn btn-primary" id="previewBtn" onclick="generatePreview()">Generate Preview</button>
+      <button class="btn btn-sm" onclick="jumpToStart()">▶ Preview Start</button>
+      <button class="btn btn-sm" onclick="jumpToEnd()">▶ Preview End</button>
+      <span class="trim-info" id="trimInfo"></span>
+    </div>
+  </div>
+
+  <!-- ═══ COVER IMAGE ═══ -->
+  <div class="card cover-card" id="coverCard">
+    <div class="card-label">
+      Portrait Cover Image
+      <span style="font-size:9px;letter-spacing:1px;color:var(--brown-muted);font-weight:400;text-transform:none;margin-left:6px;">optional</span>
+    </div>
+
+    <div class="cover-inner">
+
+      <!-- Dropzone thumbnail -->
+      <div class="cover-dropzone" id="coverDropzone"
+           onclick="document.getElementById('coverFileInput').click()"
+           title="Click to upload or drag an image here">
+        <span class="cover-dropzone-icon" id="coverDzIcon">🖼</span>
+        <div class="cover-dropzone-label" id="coverDzLabel">
+          Click or drag<br>a portrait image<br>
+          <span style="opacity:0.55;font-size:9px;">9:16 recommended</span>
+        </div>
+        <img id="coverPreviewImg" style="display:none;" alt="Cover preview">
+      </div>
+      <input type="file" id="coverFileInput" accept="image/*" style="display:none" onchange="loadCoverImage(event)">
+
+      <!-- Controls panel -->
+      <div class="cover-controls">
+
+        <div class="cover-desc">
+          Upload a <strong>portrait image</strong> — it will play as a still-frame cover
+          at the very start of your Short, before the video clip begins.<br><br>
+          Best size: <strong>1080 × 1920 px</strong> (9:16). The image fills the full
+          Short frame so vertical composition works best.
+        </div>
+
+        <!-- Options — shown only once an image is loaded -->
+        <div id="coverOptions" style="display:none; display:flex; flex-direction:column; gap:14px;">
+
+          <!-- Position grid -->
+          <div>
+            <div class="field-label">Image position on frame</div>
+            <div class="position-grid">
+              <button class="pos-btn" data-pos="top-left"    onclick="setPosition(this)">↖ Top L</button>
+              <button class="pos-btn" data-pos="top"         onclick="setPosition(this)">↑ Top</button>
+              <button class="pos-btn" data-pos="top-right"   onclick="setPosition(this)">↗ Top R</button>
+              <button class="pos-btn" data-pos="left"         onclick="setPosition(this)">← Left</button>
+              <button class="pos-btn active" data-pos="fill"  onclick="setPosition(this)">⛶ Fill</button>
+              <button class="pos-btn" data-pos="right"        onclick="setPosition(this)">→ Right</button>
+              <button class="pos-btn" data-pos="bottom-left" onclick="setPosition(this)">↙ Bot L</button>
+              <button class="pos-btn" data-pos="bottom"      onclick="setPosition(this)">↓ Bottom</button>
+              <button class="pos-btn" data-pos="bottom-right"onclick="setPosition(this)">↘ Bot R</button>
+            </div>
+          </div>
+
+          <!-- Duration slider -->
+          <div class="range-row">
+            <div class="field-label">Cover display duration: <strong id="coverDurLabel">2.0 s</strong></div>
+            <input type="range" id="coverDuration" min="0.5" max="8" step="0.5" value="2"
+                   oninput="document.getElementById('coverDurLabel').textContent=parseFloat(this.value).toFixed(1)+' s'">
+            <div style="font-size:10px;color:var(--brown-muted);">How long the cover image shows before the clip starts</div>
+          </div>
+
+          <button class="cover-remove" onclick="removeCover()">✕ Remove cover image</button>
+        </div>
+
+        <!-- Placeholder text when no image loaded -->
+        <div id="coverPlaceholderHint" style="font-size:12px;color:var(--brown-muted);">
+          No image loaded — cover is optional. Upload one above to add an intro frame.
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="card progress-wrap" id="progressCard">
+    <div class="card-label">Processing</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">Starting…</div>
+  </div>
+
+  <!-- PREVIEW OUTPUT -->
+  <div class="card preview-section" id="previewSection">
+    <div class="card-label">Your Short</div>
+    <video id="previewVideo" controls style="max-height:520px;"></video>
+    <div class="preview-actions">
+      <button class="btn btn-primary" onclick="downloadClip('mp4')">Download MP4</button>
+      <button class="btn" onclick="downloadClip('webm')">Download WebM</button>
+      <button class="btn" onclick="resetPreview()">↺ Change Selection</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- Off-screen canvas used for video compositing -->
+<canvas id="compositeCanvas" style="display:none;position:fixed;left:-9999px;"></canvas>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let sourceObjectURL = null;
+let clippedBlob     = null;
+let videoDuration   = 0;
+let isDragging      = false;
+let dragMode        = null;    // 'start' | 'end'
+let coverImageEl    = null;    // loaded HTMLImageElement
+let coverPosition   = 'fill'; // current position key
+let hasCover        = false;
+
+const mainVideo        = document.getElementById('mainVideo');
+const previewVideo     = document.getElementById('previewVideo');
+const startInput       = document.getElementById('startTime');
+const endInput         = document.getElementById('endTime');
+const timelineFill     = document.getElementById('timelineFill');
+const timelinePlayhead = document.getElementById('timelinePlayhead');
+const timelineTrack    = document.getElementById('timelineTrack');
+
+// ═══════════════════════════════════════════════
+// SOURCE LOADING
+// ═══════════════════════════════════════════════
+function setStatus(msg, isError = false) {
+  const el = document.getElementById('sourceStatus');
+  el.textContent = msg;
+  el.className = 'status' + (isError ? ' error' : '');
+}
+
+function loadLocalFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (sourceObjectURL) URL.revokeObjectURL(sourceObjectURL);
+  sourceObjectURL = URL.createObjectURL(file);
+  setupPlayer(sourceObjectURL, file.name);
+}
+
+async function loadFromURL() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+
+  if (url.includes('youtube.com') || url.includes('youtu.be')) {
+    setStatus('YouTube detected — attempting local yt-dlp fetch…');
+    try {
+      const resp = await fetch(`http://localhost:7654/fetch?url=${encodeURIComponent(url)}`);
+      if (!resp.ok) throw new Error('bridge not running');
+      const data = await resp.json();
+      if (data.streamUrl) { setupPlayer(data.streamUrl, data.title || 'YouTube Video'); return; }
+    } catch(e) {}
+    setStatus('⚠ yt-dlp bridge not detected. Load an MP4 directly or use Browse File.', true);
+    showYTFallback(url);
+    return;
+  }
+
+  setStatus('Loading…');
+  setupPlayer(url, url.split('/').pop() || 'video');
+}
+
+function showYTFallback(url) {
+  const existing = document.getElementById('ytFallback');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'ytFallback';
+  div.style.cssText = 'margin-top:12px;padding:12px;background:rgba(107,76,48,0.08);border-radius:4px;font-size:12px;color:var(--brown-mid);line-height:1.7;';
+  div.innerHTML = `<strong>To use YouTube videos:</strong><br>
+    1. Open Terminal and run:<br>
+    <code style="display:block;margin:6px 0;padding:6px 10px;background:var(--cream-mid);border-radius:3px;font-size:11px;">yt-dlp -f mp4 "${url}" -o ~/Downloads/yt_video.mp4</code>
+    2. Then click <strong>Browse File</strong> to open the downloaded MP4.<br>
+    <em style="opacity:0.7;">Install yt-dlp with: <code>brew install yt-dlp</code></em>`;
+  document.querySelector('.card').appendChild(div);
+}
+
+function setupPlayer(src, name) {
+  mainVideo.src = src;
+  mainVideo.load();
+  mainVideo.onloadedmetadata = () => {
+    videoDuration = mainVideo.duration;
+    startInput.value = 0;
+    endInput.value   = Math.min(60, videoDuration).toFixed(1);
+    endInput.max = startInput.max = videoDuration;
+    updateTimeline();
+    updateDurationDisplay();
+    document.getElementById('playerCard').classList.add('visible');
+    document.getElementById('trimCard').classList.add('visible');
+    document.getElementById('coverCard').classList.add('visible');
+    document.getElementById('trimInfo').textContent = `Video: ${formatTime(videoDuration)}`;
+    setStatus(`Loaded: ${name}`);
+  };
+  mainVideo.onerror = () => setStatus('Could not load video. Check the URL or try a direct MP4 link.', true);
+}
+
+// ═══════════════════════════════════════════════
+// COVER IMAGE
+// ═══════════════════════════════════════════════
+function loadCoverImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const objectURL = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    coverImageEl = img;
+    hasCover = true;
+    // Show in dropzone
+    const prev = document.getElementById('coverPreviewImg');
+    prev.src = objectURL;
+    prev.style.display = 'block';
+    document.getElementById('coverDzIcon').style.display  = 'none';
+    document.getElementById('coverDzLabel').style.display = 'none';
+    document.getElementById('coverDropzone').classList.add('has-image');
+    // Reveal controls
+    document.getElementById('coverOptions').style.display      = 'flex';
+    document.getElementById('coverPlaceholderHint').style.display = 'none';
+  };
+  img.src = objectURL;
+}
+
+function removeCover() {
+  if (coverImageEl) URL.revokeObjectURL(coverImageEl.src);
+  coverImageEl = null;
+  hasCover = false;
+  const prev = document.getElementById('coverPreviewImg');
+  prev.src = ''; prev.style.display = 'none';
+  document.getElementById('coverDzIcon').style.display  = '';
+  document.getElementById('coverDzLabel').style.display = '';
+  document.getElementById('coverDropzone').classList.remove('has-image');
+  document.getElementById('coverOptions').style.display = 'none';
+  document.getElementById('coverPlaceholderHint').style.display = '';
+  document.getElementById('coverFileInput').value = '';
+}
+
+function setPosition(btn) {
+  document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  coverPosition = btn.dataset.pos;
+}
+
+// Drag-and-drop on the dropzone
+const dropzone = document.getElementById('coverDropzone');
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    loadCoverImage({ target: { files: [file] } });
+  }
+});
+
+// ═══════════════════════════════════════════════
+// TIMELINE
+// ═══════════════════════════════════════════════
+mainVideo.addEventListener('timeupdate', () => {
+  if (!videoDuration) return;
+  timelinePlayhead.style.left = (mainVideo.currentTime / videoDuration * 100) + '%';
+});
+
+timelineTrack.addEventListener('mousedown', e => {
+  isDragging = true;
+  const rect = timelineTrack.getBoundingClientRect();
+  const t = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * videoDuration;
+  const ds = Math.abs(t - parseFloat(startInput.value));
+  const de = Math.abs(t - parseFloat(endInput.value));
+  dragMode = (ds < de && ds < 3) ? 'start' : (de < ds && de < 3) ? 'end' : t < parseFloat(startInput.value) ? 'start' : 'end';
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', e => {
+  if (!isDragging || !videoDuration) return;
+  const rect = timelineTrack.getBoundingClientRect();
+  const t = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * videoDuration;
+  if (dragMode === 'start') startInput.value = Math.min(t, parseFloat(endInput.value) - 0.5).toFixed(1);
+  else                      endInput.value   = Math.max(t, parseFloat(startInput.value) + 0.5).toFixed(1);
+  onTimeInput();
+});
+
+document.addEventListener('mouseup', () => { isDragging = false; });
+
+timelineTrack.addEventListener('touchstart', e => {
+  const touch = e.touches[0];
+  const rect = timelineTrack.getBoundingClientRect();
+  const t = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)) * videoDuration;
+  dragMode = Math.abs(t - parseFloat(startInput.value)) < Math.abs(t - parseFloat(endInput.value)) ? 'start' : 'end';
+  isDragging = true;
+  e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('touchmove', e => {
+  if (!isDragging || !videoDuration) return;
+  const touch = e.touches[0];
+  const rect = timelineTrack.getBoundingClientRect();
+  const t = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width)) * videoDuration;
+  if (dragMode === 'start') startInput.value = Math.min(t, parseFloat(endInput.value) - 0.5).toFixed(1);
+  else                      endInput.value   = Math.max(t, parseFloat(startInput.value) + 0.5).toFixed(1);
+  onTimeInput();
+}, { passive: false });
+
+document.addEventListener('touchend', () => { isDragging = false; });
+
+function updateTimeline() {
+  if (!videoDuration) return;
+  const s = parseFloat(startInput.value) || 0;
+  const e = parseFloat(endInput.value)   || 0;
+  timelineFill.style.left  = (s / videoDuration * 100) + '%';
+  timelineFill.style.width = Math.max(0, (e - s) / videoDuration * 100) + '%';
+}
+
+function onTimeInput() { clampTimes(); updateTimeline(); updateDurationDisplay(); }
+
+function clampTimes() {
+  startInput.value = Math.max(0, Math.min(parseFloat(startInput.value)||0, videoDuration));
+  endInput.value   = Math.max(0, Math.min(parseFloat(endInput.value)  ||0, videoDuration));
+}
+
+function updateDurationDisplay() {
+  const dur = Math.max(0, (parseFloat(endInput.value)||0) - (parseFloat(startInput.value)||0));
+  document.getElementById('clipDuration').textContent = dur.toFixed(1) + 's';
+  document.getElementById('durationWarning').classList.toggle('show', dur > 60);
+}
+
+function setCurrentAsStart() { startInput.value = mainVideo.currentTime.toFixed(1); onTimeInput(); }
+function setCurrentAsEnd()   { endInput.value   = mainVideo.currentTime.toFixed(1); onTimeInput(); }
+function jumpToStart() { mainVideo.currentTime = parseFloat(startInput.value)||0; mainVideo.play(); }
+function jumpToEnd()   { mainVideo.currentTime = Math.max(0,(parseFloat(endInput.value)||0)-3); mainVideo.play(); }
+function formatTime(s) { const m=Math.floor(s/60); return `${m}:${(s%60).toFixed(1).padStart(4,'0')}`; }
+
+// ═══════════════════════════════════════════════
+// COVER DRAWING HELPER
+// ═══════════════════════════════════════════════
+function drawCoverFrame(ctx, cw, ch) {
+  if (!hasCover || !coverImageEl) return;
+  const img = coverImageEl;
+  const pos = coverPosition;
+
+  // Black background
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, cw, ch);
+
+  if (pos === 'fill') {
+    // Cover/crop — fills entire canvas maintaining aspect
+    const scale = Math.max(cw / img.width, ch / img.height);
+    const sw = img.width * scale, sh = img.height * scale;
+    ctx.drawImage(img, (cw - sw) / 2, (ch - sh) / 2, sw, sh);
+  } else {
+    // Fit within canvas without cropping, then position
+    const scale = Math.min(cw / img.width, ch / img.height);
+    const sw = img.width * scale, sh = img.height * scale;
+    const pad = Math.round(Math.min(cw, ch) * 0.04);
+    let x = (cw - sw) / 2, y = (ch - sh) / 2; // centre default
+    if (pos.includes('left'))   x = pad;
+    if (pos.includes('right'))  x = cw - sw - pad;
+    if (pos.includes('top'))    y = pad;
+    if (pos.includes('bottom')) y = ch - sh - pad;
+    ctx.drawImage(img, x, y, sw, sh);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// CLIP GENERATION
+// ═══════════════════════════════════════════════
+async function generatePreview() {
+  const start = parseFloat(startInput.value) || 0;
+  const end   = parseFloat(endInput.value)   || 0;
+  const dur   = end - start;
+  if (dur <= 0) { alert('End time must be after start time.'); return; }
+  if (dur > 60) { alert('Clip is longer than 60 seconds. Please adjust.'); return; }
+
+  showProgress('Preparing…', 0);
+  document.getElementById('previewSection').classList.remove('visible');
+
+  try {
+    const blob = await recordClip(start, dur);
+    clippedBlob = blob;
+    previewVideo.src = URL.createObjectURL(blob);
+    previewVideo.load();
+    hideProgress();
+    document.getElementById('previewSection').classList.add('visible');
+    previewVideo.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch(err) {
+    hideProgress();
+    alert('Could not process clip: ' + err.message);
+    console.error(err);
+  }
+}
+
+function recordClip(startSec, duration) {
+  return new Promise((resolve, reject) => {
+    // Hidden video element for playback
+    const vid = document.createElement('video');
+    vid.src = mainVideo.src;
+    vid.crossOrigin = 'anonymous';
+    vid.style.cssText = 'position:fixed;left:-9999px;width:1px;top:0;';
+    document.body.appendChild(vid);
+
+    vid.onloadedmetadata = () => { vid.currentTime = startSec; };
+
+    vid.onseeked = () => {
+      // ── Canvas setup ──────────────────────────────
+      const canvas = document.getElementById('compositeCanvas');
+      canvas.width  = vid.videoWidth  || 1080;
+      canvas.height = vid.videoHeight || 1920;
+      const ctx = canvas.getContext('2d');
+
+      // ── Streams ───────────────────────────────────
+      let canvasStream;
+      try { canvasStream = canvas.captureStream(30); }
+      catch(e) {
+        document.body.removeChild(vid);
+        reject(new Error('captureStream not supported. Use Chrome or Edge.'));
+        return;
+      }
+
+      // Grab audio from source video and merge into canvas stream
+      try {
+        const vs = vid.captureStream ? vid.captureStream() : vid.mozCaptureStream();
+        vs.getAudioTracks().forEach(t => canvasStream.addTrack(t));
+      } catch(e) { /* no audio or not supported — continue anyway */ }
+
+      const mimes = ['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4'];
+      const mime  = mimes.find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
+
+      const chunks   = [];
+      const recorder = new MediaRecorder(canvasStream, { mimeType: mime });
+      recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onerror = e => { cleanup(); reject(e.error); };
+      recorder.onstop  = () => { cleanup(); resolve(new Blob(chunks, { type: mime })); };
+
+      let rafId = null;
+      function cleanup() {
+        if (rafId) cancelAnimationFrame(rafId);
+        if (vid.parentNode) vid.parentNode.removeChild(vid);
+      }
+
+      // ── Timing ───────────────────────────────────
+      const coverDur = hasCover ? parseFloat(document.getElementById('coverDuration').value) : 0;
+      const totalDur = duration + coverDur;
+      let coverPhase  = hasCover && coverDur > 0;
+      let coverStart  = null;   // performance.now() timestamp
+      let videoPhase  = false;
+
+      // ── Render loop ───────────────────────────────
+      function renderFrame(now) {
+        rafId = requestAnimationFrame(renderFrame);
+
+        if (coverPhase) {
+          if (coverStart === null) coverStart = now;
+          drawCoverFrame(ctx, canvas.width, canvas.height);
+          if ((now - coverStart) / 1000 >= coverDur) {
+            coverPhase = false;
+            vid.play().catch(() => {});
+          }
+        } else {
+          if (!videoPhase) { videoPhase = true; }
+          ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+        }
+      }
+
+      // ── Progress timer ────────────────────────────
+      let elapsed = 0;
+      const interval = setInterval(() => {
+        elapsed += 0.25;
+        const pct   = Math.min(100, (elapsed / totalDur) * 100);
+        const phase = elapsed < coverDur
+          ? `Cover frame… ${(coverDur - elapsed).toFixed(0)}s remaining`
+          : `Recording… ${(elapsed - coverDur).toFixed(0)}s / ${duration.toFixed(0)}s`;
+        showProgress(phase, pct);
+        if (elapsed >= totalDur) {
+          clearInterval(interval);
+          vid.pause();
+          recorder.stop();
+        }
+      }, 250);
+
+      // ── Start ─────────────────────────────────────
+      recorder.start(100);
+      rafId = requestAnimationFrame(renderFrame);
+      if (!coverPhase) vid.play().catch(() => {});
+    };
+
+    vid.onerror = () => { if (vid.parentNode) vid.parentNode.removeChild(vid); reject(new Error('Video failed to load.')); };
+    vid.load();
+  });
+}
+
+function showProgress(text, pct) {
+  document.getElementById('progressCard').classList.add('visible');
+  document.getElementById('progressText').textContent = text;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function hideProgress() { document.getElementById('progressCard').classList.remove('visible'); }
+
+// ═══════════════════════════════════════════════
+// DOWNLOAD
+// ═══════════════════════════════════════════════
+function downloadClip(format) {
+  if (!clippedBlob) return;
+  if (format === 'mp4' && !clippedBlob.type.includes('mp4')) {
+    const ok = confirm('Your browser recorded in WebM format (Chrome default).\nDownload as WebM for best compatibility?\n\nCancel = download labelled as .mp4 (may need conversion).');
+    downloadBlob(clippedBlob, ok ? 'shorts_clip.webm' : 'shorts_clip.mp4');
+    return;
+  }
+  downloadBlob(clippedBlob, `shorts_clip.${format}`);
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
+function resetPreview() {
+  document.getElementById('previewSection').classList.remove('visible');
+  clippedBlob = null;
+  previewVideo.src = '';
+  document.getElementById('trimCard').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
